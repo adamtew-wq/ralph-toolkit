@@ -5,8 +5,8 @@
 #   /path/to/ralph-toolkit/install-ralph.sh                  # install into $PWD
 #   /path/to/ralph-toolkit/install-ralph.sh /path/to/repo    # install into target
 #
-# Copies ralph-prompt.md, ralph-once.sh, afk-ralph.sh into the target
-# repo, and creates an empty progress.txt if one does not already exist.
+# Copies ralph-once.sh, afk-ralph.sh into the target repo, and creates
+# an empty progress.txt if one does not already exist.
 # Does not overwrite existing Ralph files — back them up first if you
 # want to refresh.
 
@@ -43,9 +43,8 @@ copy_if_missing() {
   fi
 }
 
-copy_if_missing "$TOOLKIT_DIR/ralph-prompt.md" "$TARGET_DIR/ralph-prompt.md"
-copy_if_missing "$TOOLKIT_DIR/ralph-once.sh"   "$TARGET_DIR/ralph-once.sh"
-copy_if_missing "$TOOLKIT_DIR/afk-ralph.sh"    "$TARGET_DIR/afk-ralph.sh"
+copy_if_missing "$TOOLKIT_DIR/ralph-once.sh" "$TARGET_DIR/ralph-once.sh"
+copy_if_missing "$TOOLKIT_DIR/afk-ralph.sh" "$TARGET_DIR/afk-ralph.sh"
 
 if [[ ! -e "$TARGET_DIR/progress.txt" ]]; then
   cat > "$TARGET_DIR/progress.txt" <<'EOF'
@@ -67,6 +66,7 @@ else
 fi
 
 chmod +x "$TARGET_DIR/ralph-once.sh" "$TARGET_DIR/afk-ralph.sh"
+
 
 echo ""
 echo "Ralph installed into: $TARGET_DIR"
