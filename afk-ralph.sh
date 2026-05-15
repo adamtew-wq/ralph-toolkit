@@ -10,7 +10,7 @@ for ((i=1; i<=$1; i++)); do
   result=$(docker sandbox run claude --permission-mode acceptEdits -p "@progress.txt \
   1. Run 'gh issue list --label ready-for-agent --state open' to find the next task. \
   2. Pick the lowest-numbered issue not blocked by an open issue. \
-  3. Implement it. Run tests. \
+  3. Use the /tdd skill to implement it (red-green-refactor: failing test first, then make it pass, then refactor). Run the full test suite before committing. \
   4. Commit with 'Closes #N' in the message and push. \
   5. Append to progress.txt what you did. \
   ONLY WORK ON A SINGLE TASK. \
