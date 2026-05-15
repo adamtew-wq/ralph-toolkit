@@ -43,8 +43,84 @@ copy_if_missing() {
   fi
 }
 
+# Ensure the target repo's .claude/settings.local.json grants Bash(*) so
+# Ralph runs do not stall on permission prompts. ralph-once.sh passes
+# --dangerously-skip-permissions when launching a fresh Claude, but a
+# user who triggers the workflow inline from an existing Claude session
+# inherits that session's project permissions instead — so we widen the
+# project settings here at install time. The wildcard is scoped to this
+# project only; user/global settings are not touched.
+ensure_bash_allowed() {
+  local settings_dir="$TARGET_DIR/.claude"
+  local settings_file="$settings_dir/settings.local.json"
+  mkdir -p "$settings_dir"
+
+  if [[ ! -e "$settings_file" ]]; then
+    cat > "$settings_file" <<'EOF'
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)"
+    ]
+  }
+}
+EOF
+    echo "wrote:         .claude/settings.local.json (Bash(*) for AFK Ralph runs)"
+    return
+  fi
+
+  local py=""
+  if command -v python >/dev/null 2>&1; then
+    py="python"
+  elif command -v python3 >/dev/null 2>&1; then
+    py="python3"
+  fi
+
+  if [[ -z "$py" ]]; then
+    echo "warning: python not found — add \"Bash(*)\" to $settings_file manually for AFK runs" >&2
+    return
+  fi
+
+  local status
+  status=$("$py" - "$settings_file" 2>&1 <<'PY'
+import json, sys, pathlib
+path = pathlib.Path(sys.argv[1])
+try:
+    data = json.loads(path.read_text())
+except Exception as e:
+    print(f"ERROR:could not parse JSON ({e})")
+    sys.exit(0)
+if not isinstance(data, dict):
+    print("ERROR:settings.local.json is not a JSON object")
+    sys.exit(0)
+perms = data.setdefault("permissions", {})
+if not isinstance(perms, dict):
+    print("ERROR:permissions is not an object")
+    sys.exit(0)
+allow = perms.setdefault("allow", [])
+if not isinstance(allow, list):
+    print("ERROR:permissions.allow is not an array")
+    sys.exit(0)
+if "Bash(*)" in allow:
+    print("ALREADY")
+else:
+    allow.append("Bash(*)")
+    path.write_text(json.dumps(data, indent=2) + "\n")
+    print("ADDED")
+PY
+)
+
+  case "$status" in
+    ALREADY) echo "skip (exists): Bash(*) already in .claude/settings.local.json" ;;
+    ADDED)   echo "wrote:         .claude/settings.local.json (added Bash(*) for AFK Ralph runs)" ;;
+    ERROR:*) echo "warning: ${status#ERROR:} — add \"Bash(*)\" to $settings_file manually" >&2 ;;
+    *)       echo "warning: unexpected response updating $settings_file: $status — add \"Bash(*)\" manually" >&2 ;;
+  esac
+}
+
 copy_if_missing "$TOOLKIT_DIR/ralph-once.sh" "$TARGET_DIR/ralph-once.sh"
 copy_if_missing "$TOOLKIT_DIR/afk-ralph.sh" "$TARGET_DIR/afk-ralph.sh"
+ensure_bash_allowed
 
 if [[ ! -e "$TARGET_DIR/progress.txt" ]]; then
   cat > "$TARGET_DIR/progress.txt" <<'EOF'

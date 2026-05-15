@@ -24,6 +24,8 @@ Each iteration:
 
 This copies `ralph-prompt.md`, `ralph-once.sh`, `afk-ralph.sh` and (if absent) `progress.txt` into the target. It skips any file that already exists — back up first if you want to refresh.
 
+It also adds `"Bash(*)"` to the target's `.claude/settings.local.json` so a Ralph run triggered inline from an existing Claude session does not stall on Bash approvals (the standalone scripts already pass `--dangerously-skip-permissions`). Existing entries are preserved; the change is project-scoped, not user-global.
+
 ## Prepare your issues
 
 For Ralph to pick up work, issues need:
